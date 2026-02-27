@@ -8,7 +8,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o kiro-api-proxy .
 
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk --no-cache add ca-certificates
 
 WORKDIR /app
 COPY --from=builder /app/kiro-api-proxy .
