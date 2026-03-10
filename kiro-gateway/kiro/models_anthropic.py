@@ -26,9 +26,13 @@ Anthropic's Messages API specification.
 Reference: https://docs.anthropic.com/en/api/messages
 """
 
+import json
+import logging
 import time
 from typing import Any, Dict, List, Literal, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 # ==================================================================================================
@@ -92,6 +96,34 @@ class ToolResultContentBlock(BaseModel):
         Union[str, List[Union["TextContentBlock", "ImageContentBlock"]]]
     ] = None
     is_error: Optional[bool] = None
+    cache_control: Optional[Dict[str, Any]] = None
+
+    model_config = {"extra": "allow"}
+
+    @model_validator(mode="before")
+    @classmethod
+    def sanitize_content(cls, data: Any) -> Any:
+        """Convert unrecognized content block types (e.g. tool_reference) to text."""
+        if not isinstance(data, dict):
+            return data
+        content = data.get("content")
+        if not isinstance(content, list):
+            return data
+        sanitized = []
+        for item in content:
+            if not isinstance(item, dict):
+                sanitized.append(item)
+                continue
+            item_type = item.get("type", "")
+            if item_type in ("text", "image"):
+                sanitized.append(item)
+            else:
+                # Convert unknown types (tool_reference, etc.) to text
+                text = item.get("text") or item.get("tool_name") or json.dumps(item, ensure_ascii=False)
+                sanitized.append({"type": "text", "text": f"[{item_type}] {text}"})
+                logger.debug(f"Converted unknown content type '{item_type}' to text in tool_result")
+        data["content"] = sanitized
+        return data
 
 
 # ==================================================================================================
@@ -174,6 +206,32 @@ class AnthropicMessage(BaseModel):
     content: Union[str, List[ContentBlock]]
 
     model_config = {"extra": "allow"}
+
+    @model_validator(mode="before")
+    @classmethod
+    def sanitize_content_blocks(cls, data: Any) -> Any:
+        """Convert unrecognized top-level content block types to text."""
+        if not isinstance(data, dict):
+            return data
+        content = data.get("content")
+        if not isinstance(content, list):
+            return data
+        known_types = {"text", "thinking", "image", "tool_use", "tool_result"}
+        sanitized = []
+        for block in content:
+            if not isinstance(block, dict):
+                sanitized.append(block)
+                continue
+            block_type = block.get("type", "")
+            if block_type in known_types:
+                sanitized.append(block)
+            else:
+                # Convert unknown block types to text
+                text = block.get("text") or block.get("tool_name") or json.dumps(block, ensure_ascii=False)
+                sanitized.append({"type": "text", "text": f"[{block_type}] {text}"})
+                logger.debug(f"Converted unknown content block type '{block_type}' to text in message")
+        data["content"] = sanitized
+        return data
 
 
 # ==================================================================================================

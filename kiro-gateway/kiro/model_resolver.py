@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 from loguru import logger
 
+from kiro.config import FORCE_MODEL
+
 if TYPE_CHECKING:
     from kiro.cache import ModelInfoCache
 
@@ -165,20 +167,20 @@ def normalize_model_name(name: str) -> str:
 def get_model_id_for_kiro(model_name: str, hidden_models: Dict[str, str]) -> str:
     """
     Get the model ID to send to Kiro API.
-    
+
     This is a simple helper for converters that don't have access to the full
     ModelResolver. It normalizes the name and checks hidden models.
-    
+
     For hidden models (like claude-3.7-sonnet), returns the internal Kiro ID.
     For regular models, returns the normalized name.
-    
+
     Args:
         model_name: External model name from client
         hidden_models: Dict mapping display names to internal Kiro IDs
-    
+
     Returns:
         Model ID to send to Kiro API
-    
+
     Examples:
         >>> get_model_id_for_kiro("claude-haiku-4-5-20251001", {})
         'claude-haiku-4.5'
@@ -187,6 +189,11 @@ def get_model_id_for_kiro(model_name: str, hidden_models: Dict[str, str]) -> str
         >>> get_model_id_for_kiro("claude-3-7-sonnet", {"claude-3.7-sonnet": "CLAUDE_3_7_SONNET_20250219_V1_0"})
         'CLAUDE_3_7_SONNET_20250219_V1_0'
     """
+    # Force model override if configured
+    if FORCE_MODEL:
+        logger.debug(f"Force model: replacing '{model_name}' with '{FORCE_MODEL}'")
+        model_name = FORCE_MODEL
+
     normalized = normalize_model_name(model_name)
     return hidden_models.get(normalized, normalized)
 

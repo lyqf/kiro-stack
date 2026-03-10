@@ -38,7 +38,7 @@
 ```
 客户端 (Claude Code / Cursor / Cline ...)
         │
-        ▼  :8088
+        ▼  :8099
    ┌─────────────┐
    │   kiro-go   │  Web 管理面板 + 账号池 + Token 刷新
    └──────┬──────┘
@@ -80,19 +80,19 @@ docker compose up -d
 
 ### 添加账号并使用
 
-1. 打开 `http://localhost:8088/admin`
+1. 打开 `http://localhost:8099/admin`
 2. 使用 `ADMIN_PASSWORD` 登录
 3. 添加 Kiro 账号（支持 AWS Builder ID / IAM SSO / SSO Token 等方式）
-4. 将客户端的 base URL 设为 `http://localhost:8088`
+4. 将客户端的 base URL 设为 `http://localhost:8099`
 
 ```bash
 # OpenAI 兼容
-curl http://localhost:8088/v1/chat/completions \
+curl http://localhost:8099/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "claude-sonnet-4.5", "messages": [{"role": "user", "content": "Hello"}]}'
 
 # Anthropic 兼容
-curl http://localhost:8088/v1/messages \
+curl http://localhost:8099/v1/messages \
   -H "Content-Type: application/json" \
   -d '{"model": "claude-sonnet-4.5", "max_tokens": 1024, "messages": [{"role": "user", "content": "Hello"}]}'
 ```
@@ -155,7 +155,7 @@ curl http://localhost:8088/v1/messages \
 ### 账号管理
 
 所有 Kiro 账号通过 Web 管理面板添加和管理：
-1. 访问 `http://localhost:8088/admin`
+1. 访问 `http://localhost:8099/admin`
 2. 使用 `ADMIN_PASSWORD` 登录
 3. 点击"添加账号"，支持多种方式：
    - AWS Builder ID（个人账号）

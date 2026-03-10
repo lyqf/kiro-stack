@@ -185,6 +185,17 @@ MAX_RETRIES: int = 3
 BASE_RETRY_DELAY: float = 1.0
 
 # ==================================================================================================
+# Force Model Configuration
+# ==================================================================================================
+
+# Force all requests to use a specific model, regardless of what client requests.
+# This is useful when you want to standardize on a specific model.
+#
+# Set via environment variable: FORCE_MODEL=claude-sonnet-4.5
+# Leave empty to disable (default) - uses client-specified model.
+FORCE_MODEL: str = os.getenv("FORCE_MODEL", "").strip()
+
+# ==================================================================================================
 # Hidden Models Configuration
 # ==================================================================================================
 
